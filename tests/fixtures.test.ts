@@ -29,6 +29,17 @@ for (const group of readdirSync(FIXTURES)) {
   }
 }
 
+// oxlint also lints a file outside its cwd when given the absolute path.
+test('fixture: basic/no-foo.js outside the cwd', async () => {
+  const dir = join(FIXTURES, 'basic')
+  const outside = runOxlint(join(dir, 'output'), [
+    '-c',
+    '../.oxlintrc.json',
+    join(dir, 'input/no-foo.js'),
+  ])
+  await expect(outside).toMatchFileSnapshot(join(dir, 'output/no-foo.outside-cwd.md'))
+})
+
 // ESLint applies fixes in up to 10 passes, oxlint in one per run.
 function fixUntilStable(group: string, input: string, text: string, flag: string): string {
   for (let pass = 0; pass < 10; pass++) {

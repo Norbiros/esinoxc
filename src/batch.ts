@@ -1,5 +1,6 @@
 import type { Context } from '@oxlint/plugins'
 import { readFileSync } from 'node:fs'
+import { dirname, isAbsolute, relative, sep } from 'node:path'
 import { Linter } from 'eslint'
 import { computeLineStarts, toDiagnostic, type ActualRangeDiagnostic } from './diagnostics.ts'
 import type { EsinoxOptions } from './index.ts'
@@ -106,7 +107,7 @@ function runEslint(
     ruleEntries[ruleId] = ['error', ...ruleOptions]
   }
 
-  const linter = new Linter({ cwd: context.cwd })
+  const linter = new Linter({ cwd: eslintCwd(context.cwd, filename) })
   return linter.verify(
     text,
     [
@@ -122,6 +123,13 @@ function runEslint(
     ],
     filename,
   )
+}
+
+// ESLint matches no config for a file outside its cwd, and oxlint lints one when given its
+// absolute path.
+function eslintCwd(cwd: string, filename: string): string {
+  const path = relative(cwd, filename)
+  return path.startsWith(`..${sep}`) || isAbsolute(path) ? dirname(filename) : cwd
 }
 
 // `actualText` is the editor buffer, exposed by the Norbiros/oxc build. oxlint offsets exclude a BOM.
