@@ -113,8 +113,7 @@ function runEslint(
     ruleEntries[ruleId] = ['error', ...ruleOptions]
   }
 
-  const linter = new Linter({ cwd: eslintCwd(context.cwd, filename) })
-  return linter.verify(
+  return getLinter(eslintCwd(context.cwd, filename)).verify(
     text,
     [
       ...(options.config ?? []),
@@ -129,6 +128,17 @@ function runEslint(
     ],
     filename,
   )
+}
+
+const linters = new Map<string, Linter>()
+
+function getLinter(cwd: string): Linter {
+  let linter = linters.get(cwd)
+  if (linter === undefined) {
+    linter = new Linter({ cwd })
+    linters.set(cwd, linter)
+  }
+  return linter
 }
 
 // ESLint matches no config for a file outside its cwd, and oxlint lints one when given its
