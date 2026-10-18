@@ -42,6 +42,7 @@
     "@typescript-eslint/parser": "catalog:examples",
     "eslint-plugin-vue": "catalog:examples",
     "oxlint": "catalog:toolchain",
+    "oxlint-stock": "catalog:toolchain",
     "pkg-pr-new": "catalog:publish",
     "publint": "catalog:publish",
     "typescript": "catalog:toolchain",

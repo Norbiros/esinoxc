@@ -5,8 +5,11 @@ import { fileURLToPath } from 'node:url'
 
 export const ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '')
 
-export function runOxlint(cwd: string, args: string[] = []): string {
-  const packageJson = createRequire(join(cwd, 'package.json')).resolve('oxlint/package.json')
+// `oxlint-stock` is upstream oxlint, without the Norbiros/oxc changes esinoxc needs (#5).
+export type OxlintBuild = 'oxlint' | 'oxlint-stock'
+
+export function runOxlint(cwd: string, args: string[] = [], build: OxlintBuild = 'oxlint'): string {
+  const packageJson = createRequire(join(cwd, 'package.json')).resolve(`${build}/package.json`)
   const result = spawnSync(
     process.execPath,
     [join(dirname(packageJson), 'bin/oxlint'), '--threads', '1', ...args],

@@ -1,8 +1,13 @@
-import type { Context } from '@oxlint/plugins'
+import type { Context, Diagnostic } from '@oxlint/plugins'
 import { readFileSync } from 'node:fs'
 import { dirname, isAbsolute, relative, sep } from 'node:path'
 import { Linter } from 'eslint'
-import { computeLineStarts, toDiagnostic, type ActualRangeDiagnostic } from './diagnostics.ts'
+import {
+  computeLineStarts,
+  toDiagnostic,
+  toSectionDiagnostic,
+  type Section,
+} from './diagnostics.ts'
 import type { EsinoxOptions } from './index.ts'
 
 type RuleOptions = Context['options']
@@ -13,7 +18,7 @@ export interface Batch {
   filename: string
   section: string
   rules: Map<EsinoxOptions, Map<string, RuleOptions>>
-  diagnostics?: Map<string, ActualRangeDiagnostic[]>
+  diagnostics?: Map<string, Diagnostic[]>
 }
 
 let currentBatch: Batch | undefined
@@ -31,11 +36,7 @@ export function joinBatch(context: Context, options: EsinoxOptions, ruleId: stri
   return currentBatch
 }
 
-export function batchDiagnostics(
-  context: Context,
-  batch: Batch,
-  ruleId: string,
-): ActualRangeDiagnostic[] {
+export function batchDiagnostics(context: Context, batch: Batch, ruleId: string): Diagnostic[] {
   batch.diagnostics ??= lintBatch(context, batch)
   return batch.diagnostics.get(ruleId) ?? []
 }
@@ -55,12 +56,13 @@ function canJoin(
   )
 }
 
-function lintBatch(context: Context, batch: Batch): Map<string, ActualRangeDiagnostic[]> {
-  const diagnostics = new Map<string, ActualRangeDiagnostic[]>()
+function lintBatch(context: Context, batch: Batch): Map<string, Diagnostic[]> {
+  const diagnostics = new Map<string, Diagnostic[]>()
   const text = readFullText(context)
   if (!claimFileRun(batch.filename, batch.section, text)) return diagnostics
 
   const lineStarts = computeLineStarts(text)
+  const section = stockSection(context, text)
   for (const [options, rules] of batch.rules) {
     // A fatal error belongs to no rule, so it is reported through the first one to stay visible.
     const [firstRuleId] = rules.keys()
@@ -68,7 +70,11 @@ function lintBatch(context: Context, batch: Batch): Map<string, ActualRangeDiagn
       const ruleId = message.fatal === true ? firstRuleId : message.ruleId
       if (ruleId === null || ruleId === undefined) continue
       const list = diagnostics.get(ruleId) ?? []
-      list.push(toDiagnostic(message, lineStarts))
+      list.push(
+        section === undefined
+          ? toDiagnostic(message, lineStarts)
+          : toSectionDiagnostic(message, lineStarts, section),
+      )
       diagnostics.set(ruleId, list)
     }
   }
@@ -130,6 +136,20 @@ function runEslint(
 function eslintCwd(cwd: string, filename: string): string {
   const path = relative(cwd, filename)
   return path.startsWith(`..${sep}`) || isAbsolute(path) ? dirname(filename) : cwd
+}
+
+// `actualText` and `actualRange` both come from the Norbiros/oxc build, so without `actualText`
+// diagnostics have to be placed within the section.
+function stockSection(context: Context, text: string): Section | undefined {
+  const { sourceCode } = context
+  if ('actualText' in sourceCode) return undefined
+  // The file on disk can differ from the buffer the language server lints; then nothing is inside.
+  const start = text.indexOf(sourceCode.text)
+  return {
+    start,
+    end: start === -1 ? -1 : start + sourceCode.text.length,
+    toLineColumn: (offset) => sourceCode.getLocFromIndex(offset),
+  }
 }
 
 // `actualText` is the editor buffer, exposed by the Norbiros/oxc build. oxlint offsets exclude a BOM.
