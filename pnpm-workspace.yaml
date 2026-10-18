@@ -6,7 +6,8 @@ catalogs:
     '@types/node': ^22.9.4
     # 1.87.0 plus oxc#20501 and actualText fix, built in Norbiros/oxc
     oxlint: https://github.com/Norbiros/oxc/releases/download/esinox-poc-1/oxlint-1.87.0-esinox-poc.tgz
-    typescript: 7.0.2
+    # typescript-eslint does not support TypeScript 7 yet (typescript-eslint#10940).
+    typescript: 6.0.3
     # Keep Vite Plus and its core on the same version.
     vite: npm:@voidzero-dev/vite-plus-core@1.0.0
     vite-plus: 1.0.0
