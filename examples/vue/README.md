@@ -1,6 +1,6 @@
 # Vue example
 
-`eslint-plugin-vue` template rules running inside oxlint through esinoxc. `esinox.ts` wraps the plugin, `oxlint.config.ts` loads it under the `vue-eslint/` alias and enables its `flat/recommended` preset.
+`eslint-plugin-vue` template rules running inside oxlint through esinoxc. `oxlint.config.ts` loads the ready-made `esinoxc/plugins/vue` entry under the `vue-eslint/` alias and enables its `flat/recommended` preset.
 
 ```sh
 pnpm lint

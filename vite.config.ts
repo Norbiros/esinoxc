@@ -4,6 +4,7 @@ const fixtureInputs = ['tests/fixtures/*/{input,output}/*']
 
 export default defineConfig({
   pack: {
+    entry: ['src/index.ts', 'src/plugins/*.ts'],
     dts: true,
     exports: true,
     publint: true,
