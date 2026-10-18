@@ -3,7 +3,10 @@ import type { ESLint, Linter } from 'eslint'
 
 export interface EsinoxPlugin<P extends ESLint.Plugin = ESLint.Plugin> extends Plugin {
   /** The wrapped plugin's flat configs, with its rules renamed to `name`, for oxlint's `extends`. */
-  configs: Record<FlatConfigName<P>, OxlintRulesConfig>
+  configs: { [K in FlatConfigName<P>]: OxlintRulesConfig } & {
+    // Presets typed as eslintrc configs exist only when they use no eslintrc features.
+    [K in Exclude<keyof ConfigsOf<P>, FlatConfigName<P>>]?: OxlintRulesConfig
+  }
 }
 
 export interface OxlintRulesConfig {
@@ -12,7 +15,6 @@ export interface OxlintRulesConfig {
 
 type ConfigsOf<P extends ESLint.Plugin> = NonNullable<P['configs']>
 
-// Legacy (eslintrc) configs name plugins by string, so their rules cannot be mapped.
 type FlatConfigName<P extends ESLint.Plugin> = string extends keyof ConfigsOf<P>
   ? string
   : {
@@ -24,27 +26,45 @@ export function toOxlintConfigs<P extends ESLint.Plugin>(
   plugin: P,
   baseConfig: Linter.Config[],
 ): EsinoxPlugin<P>['configs'] {
+  const presets = Object.entries(plugin.configs ?? {})
+    .map(([configName, config]) => [configName, [config].flat()] as const)
+    .filter(([, configs]) => configs.every(isMappableConfig))
+  // Some presets, like eslint-plugin-vue's `no-layout-rules`, do not register the plugin themselves.
+  const prefixes = pluginPrefixes(plugin, [
+    ...baseConfig,
+    ...presets.flatMap(([, configs]) => configs),
+  ])
   // Base config rules already run inside ESLint, so enabling them under the alias runs them twice.
-  const baseRules = new Set(Object.keys(toAliasedRules(name, plugin, baseConfig)))
+  const baseRules = new Set(Object.keys(toAliasedRules(name, prefixes, baseConfig)))
   const configs: Record<string, OxlintRulesConfig> = {}
 
-  for (const [configName, config] of Object.entries(plugin.configs ?? {})) {
-    const rules = Object.entries(toAliasedRules(name, plugin, [config].flat()))
+  for (const [configName, presetConfigs] of presets) {
+    const rules = Object.entries(toAliasedRules(name, prefixes, presetConfigs))
     configs[configName] = {
       rules: Object.fromEntries(rules.filter(([ruleId]) => !baseRules.has(ruleId))),
     }
   }
-  // Legacy configs are present at runtime, with no rules, but excluded from the type.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return configs as EsinoxPlugin<P>['configs']
 }
 
+// Plugins may keep non-config values in `configs`, and rules nested in eslintrc
+// `extends` or `overrides` cannot be mapped.
+function isMappableConfig(config: unknown): boolean {
+  return (
+    typeof config === 'object' &&
+    config !== null &&
+    !('extends' in config) &&
+    !('overrides' in config) &&
+    !('plugins' in config && Array.isArray(config.plugins))
+  )
+}
+
 function toAliasedRules(
   name: string,
-  plugin: ESLint.Plugin,
+  prefixes: Set<string>,
   configs: Array<Linter.Config | Linter.LegacyConfig>,
 ): Linter.RulesRecord {
-  const prefixes = pluginPrefixes(plugin, configs)
   const rules: Linter.RulesRecord = {}
 
   for (const config of configs) {

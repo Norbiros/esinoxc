@@ -33,14 +33,17 @@ test('renames the rules of flat configs to the given name', () => {
       { plugins: { other } },
       { rules: { 'original/no-bar': ['warn', 'baz'], 'other/rule': 'error' } },
     ],
+    layout: { rules: { 'original/no-bar': 'off' } },
     legacy: { plugins: ['original'], rules: { 'original/no-bar': 'error' } },
+    overrides: { overrides: [{ files: ['*.js'], rules: { 'original/no-bar': 'off' } }] },
   }
+  Object.assign(original.configs, { version: '1.0.0' })
 
   const wrapped = createEsinoxPlugin({ name: 'wrapped', plugin: original, config: base })
 
   expect(wrapped.configs).toEqual({
     base: { rules: {} },
     recommended: { rules: { 'wrapped/no-bar': ['warn', 'baz'] } },
-    legacy: { rules: {} },
+    layout: { rules: { 'wrapped/no-bar': 'off' } },
   })
 })
