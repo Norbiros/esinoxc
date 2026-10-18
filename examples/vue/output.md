@@ -61,7 +61,6 @@
     `----
 
 Found 5 warnings and 2 errors.
-Finished in Xms on 6 files with 212 rules using 1 threads.
 ```
 
 # stderr

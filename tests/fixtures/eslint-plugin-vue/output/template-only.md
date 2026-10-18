@@ -21,7 +21,6 @@
    `----
 
 Found 2 warnings and 0 errors.
-Finished in Xms on 1 file with 116 rules using 1 threads.
 ```
 
 # stderr

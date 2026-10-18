@@ -34,7 +34,7 @@ export function runOxlint(cwd: string, args: string[] = []): string {
 function fence(output: string): string {
   const normalized = output
     .replaceAll(ROOT, '<root>')
-    .replace(/Finished in \d+(?:\.\d+)?m?s/, 'Finished in Xms')
+    .replace(/^Finished in .*\n?/m, '')
     .trimEnd()
   return ['```', ...(normalized ? [normalized] : []), '```'].join('\n')
 }
