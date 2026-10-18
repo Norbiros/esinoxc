@@ -1,6 +1,5 @@
 import type { Context } from '@oxlint/plugins'
 import { readFileSync } from 'node:fs'
-import { extname } from 'node:path'
 import { Linter } from 'eslint'
 import { computeLineStarts, toDiagnostic, type ActualRangeDiagnostic } from './diagnostics.ts'
 import type { EsinoxOptions } from './index.ts'
@@ -113,7 +112,6 @@ function runEslint(
     [
       ...(options.config ?? []),
       {
-        files: [`**/*${extname(filename)}`],
         plugins: { [options.name]: options.plugin },
         languageOptions: { globals: context.languageOptions.globals },
         settings: context.settings,
