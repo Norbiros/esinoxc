@@ -1,0 +1,16 @@
+{
+  "name": "@esinoxc/example-svelte",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "oxlint"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "catalog:examples",
+    "esinoxc": "workspace:*",
+    "eslint-plugin-svelte": "catalog:examples",
+    "oxlint": "catalog:toolchain",
+    "svelte": "catalog:examples",
+    "typescript": "catalog:examples"
+  }
+}

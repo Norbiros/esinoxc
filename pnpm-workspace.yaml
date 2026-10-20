@@ -21,7 +21,9 @@ catalogs:
     eslint: ^10.12.0
   examples:
     '@typescript-eslint/parser': ^8.71.2
+    eslint-plugin-svelte: ^3.23.1
     eslint-plugin-vue: ^10.11.1
+    svelte: ^5.57.2
     # typescript-eslint does not support TypeScript 7 yet.
     typescript: ~6.0.3
   inlined: {}

@@ -18,6 +18,7 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
+    "./plugins/svelte": "./dist/plugins/svelte.mjs",
     "./plugins/vue": "./dist/plugins/vue.mjs",
     "./package.json": "./package.json"
   },
@@ -40,22 +41,28 @@
     "@arethetypeswrong/core": "catalog:publish",
     "@types/node": "catalog:toolchain",
     "@typescript-eslint/parser": "catalog:examples",
+    "eslint-plugin-svelte": "catalog:examples",
     "eslint-plugin-vue": "catalog:examples",
     "oxlint": "catalog:toolchain",
     "oxlint-stock": "catalog:toolchain",
     "pkg-pr-new": "catalog:publish",
     "publint": "catalog:publish",
+    "svelte": "catalog:examples",
     "typescript": "catalog:toolchain",
     "vite": "catalog:toolchain",
     "vite-plus": "catalog:toolchain"
   },
   "peerDependencies": {
     "@typescript-eslint/parser": "^8.0.0",
+    "eslint-plugin-svelte": "^3.0.0",
     "eslint-plugin-vue": "^10.0.0",
     "oxlint": ">=1.85.0"
   },
   "peerDependenciesMeta": {
     "@typescript-eslint/parser": {
+      "optional": true
+    },
+    "eslint-plugin-svelte": {
       "optional": true
     },
     "eslint-plugin-vue": {
