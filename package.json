@@ -1,6 +1,6 @@
 {
   "name": "esinoxc",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Run ESLint plugins inside oxlint.",
   "homepage": "https://github.com/Norbiros/esinoxc#readme",
   "bugs": {
