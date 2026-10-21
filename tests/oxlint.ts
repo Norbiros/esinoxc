@@ -35,9 +35,23 @@ export function runOxlint(cwd: string, args: string[] = [], build: OxlintBuild =
 }
 
 function fence(output: string): string {
-  const normalized = output
+  const normalized = sortByFile(output)
     .replaceAll(ROOT, '<root>')
     .replace(/^Finished in .*\n?/m, '')
     .trimEnd()
   return ['```', ...(normalized ? [normalized] : []), '```'].join('\n')
+}
+
+function sortByFile(output: string): string {
+  const blocks = output.split('\n\n')
+  const sorted = blocks
+    .filter((block) => blockFile(block) !== undefined)
+    .toSorted((a, b) => blockFile(a)!.localeCompare(blockFile(b)!))
+  return blocks
+    .map((block) => (blockFile(block) === undefined ? block : sorted.shift()!))
+    .join('\n\n')
+}
+
+function blockFile(block: string): string | undefined {
+  return /,-\[(.+?):\d+:\d+\]/.exec(block)?.[1]
 }
