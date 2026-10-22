@@ -5,5 +5,9 @@ import { typescriptParserConfig } from '../typescript.ts'
 export default createEsinoxPlugin({
   name: 'vue-eslint',
   plugin: vue,
-  config: [...vue.configs['flat/base'], ...(await typescriptParserConfig(['**/*.vue']))],
+  config: [
+    ...vue.configs['flat/base'],
+    ...(await typescriptParserConfig(['**/*.vue'])),
+    { files: ['**/*.vue'], languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } } },
+  ],
 })

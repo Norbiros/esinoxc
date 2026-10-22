@@ -1,7 +1,8 @@
-<script setup lang="tsx">
-const greeting = <b>Hello</b>
+<script setup lang="ts">
+const raw: unknown = 'Hello'
+const greeting = <string>raw
 </script>
 
 <template>
-  <component :is="greeting" />
+  <b>{{ greeting }}</b>
 </template>
