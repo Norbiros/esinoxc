@@ -64,10 +64,8 @@ function lintBatch(context: Context, batch: Batch): Map<string, Diagnostic[]> {
   const lineStarts = computeLineStarts(text)
   const section = stockSection(context, text)
   for (const [options, rules] of batch.rules) {
-    // A fatal error belongs to no rule, so it is reported through the first one to stay visible.
-    const [firstRuleId] = rules.keys()
     for (const message of runEslint(context, batch.filename, text, options, rules)) {
-      const ruleId = message.fatal === true ? firstRuleId : message.ruleId
+      const ruleId = message.ruleId
       if (ruleId === null || ruleId === undefined) continue
       const list = diagnostics.get(ruleId) ?? []
       list.push(
@@ -113,7 +111,7 @@ function runEslint(
     ruleEntries[ruleId] = ['error', ...ruleOptions]
   }
 
-  return getLinter(eslintCwd(context.cwd, filename)).verify(
+  const messages = getLinter(eslintCwd(context.cwd, filename)).verify(
     text,
     [
       ...(options.config ?? []),
@@ -128,6 +126,20 @@ function runEslint(
     ],
     filename,
   )
+
+  const fatal = messages.find((message) => message.fatal === true)
+  if (fatal !== undefined) throw new ParseError(options.name, fatal)
+  return messages
+}
+
+// A JS plugin can only report through a rule the user enabled, but oxlint turns a thrown error into
+// an error for the file, like ESLint does with a fatal message.
+class ParseError extends Error {
+  constructor(pluginName: string, message: Linter.LintMessage) {
+    super(`${pluginName}: ${message.message} (${message.line}:${message.column})`)
+    // oxlint prints the stack, which points into esinoxc instead of the parsed file.
+    this.stack = this.message
+  }
 }
 
 const linters = new Map<string, Linter>()

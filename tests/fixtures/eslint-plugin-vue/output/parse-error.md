@@ -1,18 +1,14 @@
 # Exit code
-0
+1
 
 # stdout
 ```
 
-  ! vue-eslint(attribute-hyphenation): Parsing error: JSX element 'string' has no corresponding closing tag.
-   ,-[input/parse-error.vue:3:18]
- 2 | const raw: unknown = 'Hello'
- 3 | const greeting = <string>raw
-   :                  ^
- 4 | </script>
-   `----
+  x Error running JS plugin.
+  | File path: <root>/tests/fixtures/eslint-plugin-vue/input/parse-error.vue
+  | vue-eslint: Parsing error: JSX element 'string' has no corresponding closing tag. (3:18)
 
-Found 1 warning and 0 errors.
+Found 0 warnings and 1 error.
 ```
 
 # stderr
