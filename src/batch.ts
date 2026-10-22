@@ -10,6 +10,13 @@ import {
 } from './diagnostics.ts'
 import type { EsinoxOptions } from './index.ts'
 
+// Part of ESLint's documented Node.js API, but missing from its types.
+declare module 'eslint' {
+  interface Linter {
+    getSuppressedMessages(): Linter.SuppressedLintMessage[]
+  }
+}
+
 type RuleOptions = Context['options']
 
 // Running ESLint once per rule would parse the file again for every rule, so all rules enabled
@@ -59,12 +66,32 @@ function canJoin(
 function lintBatch(context: Context, batch: Batch): Map<string, Diagnostic[]> {
   const diagnostics = new Map<string, Diagnostic[]>()
   const text = readFullText(context)
-  if (!claimFileRun(batch.filename, batch.section, text)) return diagnostics
+  const { run, isFirstSection } = claimFileRun(batch.filename, batch.section, text)
 
   const lineStarts = computeLineStarts(text)
-  const section = stockSection(context, text)
+  const sectionStart = text.indexOf(context.sourceCode.text)
+  const isInSection = (message: Linter.LintMessage) => {
+    const offset = (lineStarts[message.line - 1] ?? 0) + message.column - 1
+    return (
+      sectionStart !== -1 &&
+      offset >= sectionStart &&
+      offset < sectionStart + context.sourceCode.text.length
+    )
+  }
+  const section = stockSection(context, sectionStart)
   for (const [options, rules] of batch.rules) {
-    for (const message of runEslint(context, batch.filename, text, options, rules)) {
+    if (isFirstSection)
+      run.results.set(options, runEslint(context, batch.filename, text, options, rules))
+    const result = run.results.get(options)
+    if (result === undefined) continue
+
+    // oxlint reads the disable directives of the section itself and treats one as unused when
+    // nothing reached it, so diagnostics ESLint suppressed there are handed back to oxlint.
+    const messages = [
+      ...(isFirstSection ? result.messages : []),
+      ...result.suppressed.filter(isInSection),
+    ]
+    for (const message of messages) {
       const ruleId = message.ruleId
       if (ruleId === null || ruleId === undefined) continue
       const list = diagnostics.get(ruleId) ?? []
@@ -79,24 +106,40 @@ function lintBatch(context: Context, batch: Batch): Map<string, Diagnostic[]> {
   return diagnostics
 }
 
+interface EslintResult {
+  messages: Linter.LintMessage[]
+  suppressed: Linter.SuppressedLintMessage[]
+}
+
+interface FileRun {
+  text: string
+  sections: Set<string>
+  results: Map<EsinoxOptions, EslintResult>
+}
+
 // Each `<script>` section of a partially loaded file is a separate oxlint call; only the first one
 // of a run lints the whole file.
-const fileRuns = new Map<string, { text: string; sections: Set<string> }>()
+const fileRuns = new Map<string, FileRun>()
 // A file's sections run back to back on one oxlint thread, so only files in flight need an entry.
 const MAX_FILE_RUNS = 256
 
-function claimFileRun(filename: string, section: string, text: string): boolean {
+function claimFileRun(
+  filename: string,
+  section: string,
+  text: string,
+): { run: FileRun; isFirstSection: boolean } {
   const run = fileRuns.get(filename)
   if (run !== undefined && run.text === text && !run.sections.has(section)) {
     run.sections.add(section)
-    return false
+    return { run, isFirstSection: false }
   }
 
+  const newRun: FileRun = { text, sections: new Set([section]), results: new Map() }
   fileRuns.delete(filename)
-  fileRuns.set(filename, { text, sections: new Set([section]) })
+  fileRuns.set(filename, newRun)
   const oldest = fileRuns.keys().next().value
   if (fileRuns.size > MAX_FILE_RUNS && oldest !== undefined) fileRuns.delete(oldest)
-  return true
+  return { run: newRun, isFirstSection: true }
 }
 
 function runEslint(
@@ -105,13 +148,14 @@ function runEslint(
   text: string,
   options: EsinoxOptions,
   rules: Map<string, RuleOptions>,
-): Linter.LintMessage[] {
+): EslintResult {
   const ruleEntries: Linter.RulesRecord = {}
   for (const [ruleId, ruleOptions] of rules) {
     ruleEntries[ruleId] = ['error', ...ruleOptions]
   }
 
-  const messages = getLinter(eslintCwd(context.cwd, filename)).verify(
+  const linter = getLinter(eslintCwd(context.cwd, filename))
+  const messages = linter.verify(
     text,
     [
       ...(options.config ?? []),
@@ -129,7 +173,7 @@ function runEslint(
 
   const fatal = messages.find((message) => message.fatal === true)
   if (fatal !== undefined) throw new ParseError(options.name, fatal)
-  return messages
+  return { messages, suppressed: linter.getSuppressedMessages() }
 }
 
 // A JS plugin can only report through a rule the user enabled, but oxlint turns a thrown error into
@@ -162,11 +206,10 @@ function eslintCwd(cwd: string, filename: string): string {
 
 // `actualText` and `actualRange` both come from the Norbiros/oxc build, so without `actualText`
 // diagnostics have to be placed within the section.
-function stockSection(context: Context, text: string): Section | undefined {
+function stockSection(context: Context, start: number): Section | undefined {
   const { sourceCode } = context
   if ('actualText' in sourceCode) return undefined
   // The file on disk can differ from the buffer the language server lints; then nothing is inside.
-  const start = text.indexOf(sourceCode.text)
   return {
     start,
     end: start === -1 ? -1 : start + sourceCode.text.length,

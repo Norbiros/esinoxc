@@ -5,14 +5,22 @@
 ```
 
   ! vue-eslint(html-self-closing): Require self-closing on HTML elements (<span>).
-    ,-[input/disable-comments.vue:12:9]
- 11 |   <!-- eslint-enable vue-eslint/html-self-closing -->
- 12 |   <span></span>
+    ,-[input/disable-comments.vue:14:9]
+ 13 |   <!-- eslint-enable vue-eslint/html-self-closing -->
+ 14 |   <span></span>
     :         ^^^^^^^
- 13 | </template>
+ 15 | </template>
     `----
 
-Found 1 warning and 0 errors.
+  ! Unused eslint-disable directive (no problems were reported).
+   ,-[input/disable-comments.vue:4:1]
+ 3 | import { ref } from '@vue/runtime-core'
+ 4 | // eslint-disable-next-line vue-eslint/prefer-import-from-vue
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | import { computed } from 'vue'
+   `----
+
+Found 2 warnings and 0 errors.
 ```
 
 # stderr

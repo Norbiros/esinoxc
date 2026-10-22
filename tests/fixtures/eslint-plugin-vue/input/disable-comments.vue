@@ -1,6 +1,8 @@
 <script setup>
 // eslint-disable-next-line vue-eslint/prefer-import-from-vue
 import { ref } from '@vue/runtime-core'
+// eslint-disable-next-line vue-eslint/prefer-import-from-vue
+import { computed } from 'vue'
 </script>
 
 <template>
