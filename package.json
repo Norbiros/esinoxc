@@ -53,7 +53,7 @@
     "vite-plus": "catalog:toolchain"
   },
   "peerDependencies": {
-    "@typescript-eslint/parser": "^8.0.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "eslint-plugin-svelte": "^3.0.0",
     "eslint-plugin-vue": "^10.0.0",
     "oxlint": ">=1.85.0"
