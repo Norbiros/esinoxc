@@ -1,17 +1,19 @@
 # ESinOxc
 
-**esinoxc** (/ɛs ɪn ɒks/) stands for [**ES**Lint](https://eslint.org) **in** [**Oxc**](https://oxc.rs)lint.
+**esinoxc** (/ɛsɪnˈɒksi/) stands for [**ES**Lint](https://eslint.org) **in** [**Oxc**](https://oxc.rs)lint.
 
 > [!IMPORTANT]
 > esinoxc isn't ready for real projects yet. Linting and fixing `<template>` needs an oxlint change that isn't merged, so until [#5](https://github.com/Norbiros/esinoxc/issues/5) is resolved I don't recommend using it outside of experiments.
 
 ## Why esinoxc?
 
-If you found this repo, you probably already know Oxlint but can't migrate to it yet. Oxlint can run ESLint plugins as JS plugins, but not on templates in files like `.vue` or `.astro`, so until now you had to keep ESLint next to it, which makes your toolchain more complex.
+Oxlint can already run ESLint plugins as JS plugins, but **it doesn't work on templates in files** like `.vue` or `.svelte`. The Oxlint team expects to work on custom languages in 2027 ([oxc#24262](https://github.com/oxc-project/oxc/issues/24262)), so until then projects in those ecosystems are stuck with ESLint.
 
-esinoxc is a **stepping stone** until Oxlint supports templates and custom languages natively. It doesn't make linting much faster, but it lets you migrate to Oxlint today, and once it does, you can easily remove esinoxc and keep the rest of your config.
+esinoxc is a **stepping stone** until then. It runs ESLint, with its parsers and plugins, inside an Oxlint JS plugin and reports the results back to Oxlint. Rules work exactly as they do in ESLint, so you get the same diagnostics and fixes.
 
-This means you can _almost_ migrate your Vue, Nuxt or other projects to the [Oxc](https://oxc.rs) and [Vite+](https://viteplus.dev) toolchain today.
+Because ESLint still does the work, linting these files isn't faster yet. What you get today is a better toolchain: one linter, one config, and Oxlint for all other files (like TS). Once Oxlint supports templates natively, you will be able to easily remove esinoxc and get the rest of the speed benefits.
+
+This means you can migrate your Vue, Svelte, Nuxt or other projects to the [Oxc](https://oxc.rs) and [Vite+](https://viteplus.dev) toolchain today.
 
 ## Installation
 
@@ -20,6 +22,8 @@ pnpm add -D esinoxc oxlint
 ```
 
 ## Usage
+
+Moving from ESLint? See [MIGRATION.md](MIGRATION.md).
 
 ### Vue
 
@@ -63,11 +67,6 @@ export default createEsinoxPlugin({ name: 'foo-eslint', plugin: foo })
   "rules": { "foo-eslint/some-rule": "error" }
 }
 ```
-
-## Limitations
-
-- oxlint applies fixes in one pass per run, ESLint in up to 10, so `--fix` may need a few runs ([oxc#16118](https://github.com/oxc-project/oxc/issues/16118)).
-- Don't enable an oxlint built-in plugin together with the same ESLint plugin through esinoxc (e.g. `vue` and `vue-eslint`), or the rules both implement will report twice.
 
 ## Development
 
