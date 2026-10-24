@@ -4,14 +4,14 @@ packages:
 catalogs:
   toolchain:
     '@types/node': ^22.9.4
-    # 1.87.0 plus oxc#20501 and actualText fix, built in Norbiros/oxc
-    oxlint: https://github.com/Norbiros/oxc/releases/download/esinox-poc-1/oxlint-1.87.0-esinox-poc.tgz
+    # 1.89.0 plus oxc#20501, actualText and fixes, built in Norbiros/oxc
+    oxlint: https://github.com/Norbiros/oxc/releases/download/esinox-poc-3/oxlint-1.89.0-esinox-poc.tgz
     oxlint-stock: npm:oxlint@1.88.0
     # typescript-eslint does not support TypeScript 7 yet (typescript-eslint#10940).
     typescript: 6.0.3
     # Keep Vite Plus and its core on the same version.
-    vite: npm:@voidzero-dev/vite-plus-core@1.0.0
-    vite-plus: 1.0.0
+    vite: npm:@voidzero-dev/vite-plus-core@1.4.0
+    vite-plus: 1.4.0
   publish:
     '@arethetypeswrong/core': 0.18.5
     pkg-pr-new: 0.0.91
